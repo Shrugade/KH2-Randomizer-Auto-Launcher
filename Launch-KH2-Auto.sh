@@ -107,6 +107,67 @@ LIVESPLIT=$(find "$HOME" -type f -iname 'LiveSplit.exe' -print -quit 2>/dev/null
 
 LIVESPLIT_DIR=$(dirname "$LIVESPLIT")
 
+# Temporarily use a matched 64-bit VC++ runtime set from the Proton prefix.
+VC_RUNTIME_DIR="$COMPAT/pfx/drive_c/windows/system32"
+
+VC_TARGETS=(
+    "$GAME_DIR/msvcp140.dll"
+    "$GAME_DIR/vcruntime140.dll"
+    "$GAME_DIR/dependencies/msvcp140.dll"
+    "$GAME_DIR/vcruntime140_1.dll"
+)
+
+VC_TOUCHED=()
+VC_BACKUP_SUFFIX=".kh2-auto-original"
+VC_TEMP_SUFFIX=".kh2-auto-new"
+
+restore_vc_runtime() {
+    local target
+    for target in "${VC_TOUCHED[@]}"; do
+        if [[ -e "$target$VC_BACKUP_SUFFIX" || -L "$target$VC_BACKUP_SUFFIX" ]]; then
+            mv -f "$target$VC_BACKUP_SUFFIX" "$target" ||
+                echo "WARNING: Could not restore $target"
+        else
+            rm -f "$target" ||
+                echo "WARNING: Could not remove temporary $target"
+        fi
+        rm -f "$target$VC_TEMP_SUFFIX"
+    done
+    VC_TOUCHED=()
+}
+
+trap restore_vc_runtime EXIT
+trap 'restore_vc_runtime; exit 129' HUP
+trap 'restore_vc_runtime; exit 130' INT
+trap 'restore_vc_runtime; exit 143' TERM
+
+# Verify all matching runtime files exist before changing anything.
+for target in "${VC_TARGETS[@]}"; do
+    source="$VC_RUNTIME_DIR/$(basename "$target")"
+
+    [[ -f "$source" ]] || fail "Missing Proton runtime: $(basename "$target")"
+    [[ -f "$target" ]] || fail "Missing game runtime: $target"
+
+    [[ ! -e "$target$VC_BACKUP_SUFFIX" && ! -L "$target$VC_BACKUP_SUFFIX" ]] ||
+        fail "Existing runtime backup: $target"
+done
+
+# Back up and replace the complete app-local runtime set.
+for target in "${VC_TARGETS[@]}"; do
+    source="$VC_RUNTIME_DIR/$(basename "$target")"
+
+    mv "$target" "$target$VC_BACKUP_SUFFIX" ||
+        fail "Backing up $(basename "$target")"
+
+    VC_TOUCHED+=("$target")
+
+    cp -p "$source" "$target$VC_TEMP_SUFFIX" ||
+        fail "Copying $(basename "$target")"
+
+    mv -f "$target$VC_TEMP_SUFFIX" "$target" ||
+        fail "Installing $(basename "$target")"
+done
+
 echo "All paths detected:"
 echo "Game:       $GAME_EXE"
 echo "Prefix:     $COMPAT"
@@ -122,7 +183,7 @@ echo
 # Preserve the previously tested KH2 launch settings.
 cd "$GAME_DIR" || fail "Cannot enter KH2 directory"
 
-DISABLE_LSFGVK=1 gamescope \
+DISABLE_LSFGVK=1 gamescope --rt \
     -w 1280 -h 720 -W 640 -H 720 -S stretch -F linear -- \
     env \
     STEAM_COMPAT_APP_ID="$APPID" \
@@ -157,7 +218,7 @@ STEAM_COMPAT_CLIENT_INSTALL_PATH="$STEAM" \
 STEAM_COMPAT_DATA_PATH="$COMPAT" \
 WINEFSYNC=1 \
 WINEDLLOVERRIDES="winex11.drv=b" \
-"$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$TRACKER" &
+taskset -c 4-7 "$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$TRACKER" &
 
 sleep 3
 
@@ -172,7 +233,7 @@ STEAM_COMPAT_CLIENT_INSTALL_PATH="$STEAM" \
 STEAM_COMPAT_DATA_PATH="$COMPAT" \
 WINEFSYNC=1 \
 WINEDLLOVERRIDES="winex11.drv=b" \
-"$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$LIVESPLIT" &
+taskset -c 4-7 "$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$LIVESPLIT" &
 
 # Position the Wine desktop in the 1280x720 area, leaving KDE's panel exposed.
 for attempt in {1..20}; do
@@ -191,5 +252,16 @@ done
 echo
 echo "KH2, Tracker, and LiveSplit have been started."
 echo "KH2 launch log: $HOME/kh2-gamescope.log"
+echo "Temporary VC++ runtime will remain active until KH2 exits."
 echo
+
+# Wait for KH2 to exit before restoring the original runtime.
+wait "$GAME_PID"
+
+restore_vc_runtime
+trap - EXIT INT TERM
+
+echo
+echo "Original VC++ runtime files restored."
 read -r -p "Press ENTER to close this launcher window..."
+se this launcher window..."
