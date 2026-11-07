@@ -218,7 +218,7 @@ STEAM_COMPAT_CLIENT_INSTALL_PATH="$STEAM" \
 STEAM_COMPAT_DATA_PATH="$COMPAT" \
 WINEFSYNC=1 \
 WINEDLLOVERRIDES="winex11.drv=b" \
-taskset -c 4-7 "$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$TRACKER" &
+nice -n 5 taskset -c 4-7 "$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$TRACKER" &
 
 sleep 3
 
@@ -233,7 +233,7 @@ STEAM_COMPAT_CLIENT_INSTALL_PATH="$STEAM" \
 STEAM_COMPAT_DATA_PATH="$COMPAT" \
 WINEFSYNC=1 \
 WINEDLLOVERRIDES="winex11.drv=b" \
-taskset -c 4-7 "$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$LIVESPLIT" &
+nice -n 5 taskset -c 4-7 "$PROTON" run explorer /desktop=KH2Tracker,1280x800 "$LIVESPLIT" &
 
 # Position the Wine desktop in the 1280x720 area, leaving KDE's panel exposed.
 for attempt in {1..20}; do
