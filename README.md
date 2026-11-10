@@ -1,3 +1,4 @@
+
 # KH2 Randomizer Auto Launcher
 
 A Steam Deck launcher for Kingdom Hearts II Final Mix that automates launching KH2 alongside KH2 Tracker and LiveSplit in a shared Wine virtual desktop.
@@ -20,6 +21,32 @@ The Steam Deck must also have the following components installed:
 - xdotool
 - Python 3
 
+### Required VC++ Runtime Dependencies
+
+The launcher requires the following four DLL files to be present in the KH2 game directory:
+
+- `msvcp140.dll`
+- `vcruntime140.dll`
+- `vcruntime140_1.dll`
+- `dependencies/msvcp140.dll`
+
+**All four files are required.** The second copy of `msvcp140.dll` must be placed inside the game's `dependencies` directory.
+
+The expected directory structure is:
+
+```text
+KINGDOM HEARTS -HD 1.5+2.5 ReMIX-/
+├── msvcp140.dll
+├── vcruntime140.dll
+├── vcruntime140_1.dll
+└── dependencies/
+    └── msvcp140.dll
+```
+
+These files must be obtained separately and installed before running the launcher. The launcher does not download or install these dependencies.
+
+**Do not substitute unrelated DLL versions.** Use the appropriate runtime files for your KH2 installation.
+
 ### Optional: KH2Moose Support
 
 The launcher includes full KH2Moose compatibility, including memory-block allocation functionality.
@@ -36,7 +63,10 @@ The launcher does not download, install, or automatically configure KH2Moose or 
 4. Download and install KH2 Tracker.
 5. Download and install LiveSplit.
 6. Download and install KH2 Load Remover.
-7. Ensure that `KhTracker.exe` and `LiveSplit.exe` are located somewhere within your home directory.
+7. Obtain the four required VC++ runtime DLL files and place them in the KH2 game directory using the directory structure shown above.
+8. Ensure that `KhTracker.exe` and `LiveSplit.exe` are located somewhere within your home directory.
+
+**Important:** Verify that all four DLL files are present before launching the script.
 
 ## Usage
 
@@ -53,7 +83,8 @@ The launcher does not download, install, or automatically configure KH2Moose or 
 - Always launch the script from Steam Deck Desktop Mode.
 - Do not close the launcher terminal while the game is running.
 - KH2 Tracker and LiveSplit are launched after you reach the actual KH2 title screen.
-- KH2 Load Remover must be installed separately.
+- KH2 Load Remover must be installed separately. The launcher does not install it.
+- All four VC++ runtime DLL files are required.
 - KH2Moose is optional and is not a dependency of the launcher.
 - Mods and their associated files must be installed separately.
 
@@ -61,8 +92,6 @@ The launcher does not download, install, or automatically configure KH2Moose or 
 
 The launcher includes compatibility adjustments that allow KH2Moose to use its full functionality, including its memory-block allocation features.
 
-This is intended to provide the most seamless possible experience for sessions using KH2Moose, regardless of which mod includes or uses it.
+This is intended to provide a seamless experience for sessions using KH2Moose, regardless of which mod includes or uses it.
 
-KH2Moose is simply an additional feature supported by the launcher, not a requirement for standard randomizer sessions.racker and LiveSplit launch automatically in the shared Wine virtual desktop.
-
-**Important:** KH2 Load Remover must be installed separately. The launcher does not install it.
+KH2Moose is an additional feature supported by the launcher, not a requirement for standard randomizer sessions.
